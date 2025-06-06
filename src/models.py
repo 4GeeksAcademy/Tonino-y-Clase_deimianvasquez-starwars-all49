@@ -13,11 +13,6 @@ class User(db.Model):
     password: Mapped[str] = mapped_column(nullable=False)
 
 
-    
-
-
-
-
 class Planet(db.Model):
     __tablename__ = "planet"
     id: Mapped[int] = mapped_column(primary_key=True)
