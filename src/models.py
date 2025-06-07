@@ -1,6 +1,6 @@
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import String, Boolean, Text
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy import String, Boolean, Text, ForeignKey
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 db = SQLAlchemy()
 
@@ -14,11 +14,19 @@ class User(db.Model):
     password: Mapped[str] = mapped_column(nullable=False)
 
 
+    
+
+
+
+
 class Planet(db.Model):
     __tablename__ = "planet"
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String(80), nullable=False)
     description: Mapped[str] = mapped_column(Text, nullable=True)
+
+    favorites: Mapped[list["Favorite"]] = relationship(back_populates="planet")
+
 
 class People(db.Model):
     __tablename__ = "people"
@@ -27,7 +35,8 @@ class People(db.Model):
         String(50), unique=True, nullable=False)
     description: Mapped[str] = mapped_column(
         Text, nullable=False)
-
+    
+    favorites: Mapped[list["Favorite"]] = relationship(back_populates="people")
 
     def serialize(self):
         return {
@@ -36,6 +45,17 @@ class People(db.Model):
             "description": self.description,
         }
 
+
+class Favorite(db.Model):
+    __tablename__ = "favorite"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("user.id"), nullable=False)
+    planet_id: Mapped[int] = mapped_column(ForeignKey("planet.id"), nullable=True)
+    people_id: Mapped[int] = mapped_column(ForeignKey("people.id"), nullable=True)
+
+    user: Mapped["User"] = relationship(back_populates="favorites")
+    planet: Mapped["Planet"] = relationship(back_populates="favorites")
+    people: Mapped["People"] = relationship(back_populates="favorites")
 
 """
 📝 Instrucciones
