@@ -26,6 +26,13 @@ class Planet(db.Model):
 
     favorites: Mapped[list["Favorite"]] = relationship(back_populates="planet")
 
+    def serialize(self):
+        return {
+            "id": self.id,
+            "name": self.name,
+            "description": self.description,
+        }
+
 
 class People(db.Model):
     __tablename__ = "people"
@@ -65,7 +72,7 @@ class Favorite(db.Model):
 
 Crea una API conectada a una base de datos e implemente los siguientes endpoints (muy similares a SWAPI.dev or SWAPI.tech):
 
-    [GET] /people Listar todos los registros de people en la base de datos.
+    
     [GET] /people/<int:people_id> Muestra la información de un solo personaje según su id.
     [GET] /planets Listar todos los registros de planets en la base de datos.
     [GET] /planets/<int:planet_id> Muestra la información de un solo planeta según su id.
