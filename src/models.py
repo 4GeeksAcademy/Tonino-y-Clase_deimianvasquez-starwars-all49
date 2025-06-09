@@ -1,6 +1,7 @@
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import String, Boolean, Text, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
+from typing import List
 
 db = SQLAlchemy()
 
@@ -13,7 +14,7 @@ class User(db.Model):
         String(120), unique=True, nullable=False)
     password: Mapped[str] = mapped_column(nullable=False)
 
-
+    favorites: Mapped[List["Favorite"]] = relationship(back_populates="user")
     
 
 
@@ -24,7 +25,7 @@ class Planet(db.Model):
     name: Mapped[str] = mapped_column(String(80), nullable=False)
     description: Mapped[str] = mapped_column(Text, nullable=True)
 
-    favorites: Mapped[list["Favorite"]] = relationship(back_populates="planet")
+    favorites: Mapped[List["Favorite"]] = relationship(back_populates="planet")
 
     def serialize(self):
         return {
@@ -42,7 +43,7 @@ class People(db.Model):
     description: Mapped[str] = mapped_column(
         Text, nullable=False)
 
-    favorites: Mapped[list["Favorite"]] = relationship(back_populates="people")
+    favorites: Mapped[List["Favorite"]] = relationship(back_populates="people")
 
     def serialize(self):
         return {
@@ -89,17 +90,5 @@ Adicionalmente, necesitamos crear los siguientes endpoints para que podamos tene
 
     Tu API actual no tiene un sistema de autenticación (todavía), es por eso que la única forma de crear usuarios es directamente en la base de datos usando el Flask admin.
 
-
-
-    - Alvaro - Tabla user 
-    - Antonio - Tabla Planet
-    - Eric - Tabla people
-    - Guillermo - Tabla de favorite
-    - Javiera - Realations
-    - Jose David - get people
-    - Julian - pepple por id
-    - Maria - get planets
-    - Tobias - get plants is
-    - Valentina - añadir un planeta a favorite
 
 """
