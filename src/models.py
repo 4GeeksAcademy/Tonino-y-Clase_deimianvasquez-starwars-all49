@@ -8,15 +8,22 @@ db = SQLAlchemy()
 
 class User(db.Model):
     __tablename__ = "user"
+
     id: Mapped[int] = mapped_column(primary_key=True)
     lastname: Mapped[str] = mapped_column(String(50), nullable=False)
     email: Mapped[str] = mapped_column(
         String(120), unique=True, nullable=False)
-    password: Mapped[str] = mapped_column(nullable=False)
+    password: Mapped[str] = mapped_column(nullable=True)
 
     favorites: Mapped[List["Favorite"]] = relationship(back_populates="user")
-    
 
+    def serialize(self):
+        return {
+            "id": self.id,
+            "email": self.email,
+            "lastname": self.lastname
+        }
+    
 
 
 class Planet(db.Model):
@@ -67,7 +74,20 @@ class Favorite(db.Model):
     planet: Mapped["Planet"] = relationship(back_populates="favorites")
     people: Mapped["People"] = relationship(back_populates="favorites")
 
-
+    def serialize(self):
+        if self.planet:
+            return {
+                "id_favorito": self.id,
+                "tipo": "planeta",
+                "datos": self.planet.serialize()
+            }
+        elif self.people:
+            return {
+                "id_favorito": self.id,
+                "tipo": "people",
+                "datos": self.people.serialize()
+            }
+        return None
 """
 
 

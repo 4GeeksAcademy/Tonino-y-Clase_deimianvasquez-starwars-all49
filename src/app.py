@@ -42,6 +42,52 @@ def handle_invalid_usage(error):
 def sitemap():
     return generate_sitemap(app)
 
+@app.route("/user", methods = ["GET"])
+def get_all_user():
+    all_users = User.query.all()
+    
+    results = [user.serialize() for user in all_users]
+    return jsonify(results), 200
+
+@app.route('/users/<int:user_id>/favorites', methods=['GET'])
+def get_user_favorites(user_id):
+    # Primero, buscamos al usuario por su id
+    user = User.query.get(user_id)
+    if not user:
+        return jsonify({"msg": "Usuario no encontrado"}), 404
+
+    # Usamos la relación "favorites" que ya definiste en el modelo User
+    # y serializamos cada favorito usando el nuevo método que creamos
+    user_favorites = [fav.serialize() for fav in user.favorites]
+
+    return jsonify(user_favorites), 200
+
+@app.route('/favorite/people/<int:people_id>', methods=['POST'])
+def add_favorite_people(people_id):
+    # Como no hay login, esperamos recibir el user_id en el cuerpo de la petición
+    body = request.json
+    user_id = body.get('user_id', None)
+
+    if not user_id:
+        return jsonify({"msg": "Se necesita el user_id"}), 400
+
+    # Comprobar que el usuario y la persona existen
+    user = User.query.get(user_id)
+    person = People.query.get(people_id)
+
+    if not user:
+        return jsonify({"msg": "Usuario no encontrado"}), 404
+    if not person:
+        return jsonify({"msg": "Persona no encontrada"}), 404
+        
+    favorite = Favorite(user_id=user_id, people_id=people_id)
+    db.session.add(favorite)
+    try:
+        db.session.commit()
+        return jsonify('Persona favorita guardada'), 201
+    except Exception as error:
+        db.session.rollback()
+        return jsonify(f'error: {error}')
 
 @app.route("/people", methods=["GET"])
 def get_people():
@@ -120,28 +166,72 @@ def populate_people():
 @app.route("/planet-population",  methods=["GET"])
 def populate_planet():
 
-    URL_PEOPLE = "https://swapi.tech/api/planets?page=1&limit=50"
-    response = requests.get(URL_PEOPLE)
+    URL_PLANETS = "https://swapi.tech/api/planets?page=1&limit=50"
+    response = requests.get(URL_PLANETS)
     data = response.json()
-    for person in data["results"]:
-        response = requests.get(person["url"])
-        person_data = response.json()
-        person_data = person_data["result"]
+    for planet in data["results"]:
+        response = requests.get(planet["url"])
+        planet_data = response.json()
+        planet_data = planet_data["result"]
 
-        people = Planet()
-        people.name = person_data["properties"]["name"]
-        people.description = person_data["description"]
-        # people.eye_color = person_data["properties"]["eye_color"]
+        planet = Planet()
+        planet.name = planet_data["properties"]["name"]
+        planet.description = planet_data["description"]
 
-        db.session.add(people)
+        db.session.add(planet)
 
     try:
         db.session.commit()
-        return jsonify("People saved"), 201
+        return jsonify("Planet saved"), 201
 
     except Exception as error:
         db.session.rollback()
         return jsonify(f"Error: {error.args}")
+
+@app.route('/favorite/planet/<int:planet_id>', methods=['DELETE'])
+def delete_favorite_planet(planet_id):
+    # Para saber qué favorito borrar, necesitamos el user_id
+    body = request.json
+    user_id = body.get('user_id', None)
+
+    if not user_id:
+        return jsonify({"msg": "Se necesita el user_id"}), 400
+
+    # Buscamos el favorito específico que coincida con el usuario y el planeta
+    favorite = Favorite.query.filter_by(user_id=user_id, planet_id=planet_id).first()
+
+    if not favorite:
+        return jsonify({"msg": "Favorito no encontrado"}), 404
+
+    db.session.delete(favorite)
+    try:
+        db.session.commit()
+        return jsonify('Planeta favorito eliminado'), 200
+    except Exception as error:
+        db.session.rollback()
+        return jsonify(f'error: {error}')
+    
+@app.route('/favorite/people/<int:people_id>', methods=['DELETE'])
+def delete_favorite_people(people_id):
+    body = request.json
+    user_id = body.get('user_id', None)
+    
+    if not user_id:
+        return jsonify({"msg": "Se necesita el user_id"}), 400
+
+    # Buscamos el favorito específico que coincida con el usuario y la persona
+    favorite = Favorite.query.filter_by(user_id=user_id, people_id=people_id).first()
+
+    if not favorite:
+        return jsonify({"msg": "Favorito no encontrado"}), 404
+
+    db.session.delete(favorite)
+    try:
+        db.session.commit()
+        return jsonify('Persona favorita eliminada'), 200
+    except Exception as error:
+        db.session.rollback()
+        return jsonify(f'error: {error}')
 
 
 # this only runs if `$ python src/app.py` is executed
