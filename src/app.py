@@ -51,27 +51,24 @@ def get_all_user():
 
 @app.route('/users/<int:user_id>/favorites', methods=['GET'])
 def get_user_favorites(user_id):
-    # Primero, buscamos al usuario por su id
     user = User.query.get(user_id)
     if not user:
         return jsonify({"msg": "Usuario no encontrado"}), 404
 
-    # Usamos la relación "favorites" que ya definiste en el modelo User
-    # y serializamos cada favorito usando el nuevo método que creamos
     user_favorites = [fav.serialize() for fav in user.favorites]
 
     return jsonify(user_favorites), 200
 
 @app.route('/favorite/people/<int:people_id>', methods=['POST'])
 def add_favorite_people(people_id):
-    # Como no hay login, esperamos recibir el user_id en el cuerpo de la petición
+    
     body = request.json
     user_id = body.get('user_id', None)
 
     if not user_id:
         return jsonify({"msg": "Se necesita el user_id"}), 400
 
-    # Comprobar que el usuario y la persona existen
+    
     user = User.query.get(user_id)
     person = People.query.get(people_id)
 
@@ -190,14 +187,14 @@ def populate_planet():
 
 @app.route('/favorite/planet/<int:planet_id>', methods=['DELETE'])
 def delete_favorite_planet(planet_id):
-    # Para saber qué favorito borrar, necesitamos el user_id
+    
     body = request.json
     user_id = body.get('user_id', None)
 
     if not user_id:
         return jsonify({"msg": "Se necesita el user_id"}), 400
 
-    # Buscamos el favorito específico que coincida con el usuario y el planeta
+    
     favorite = Favorite.query.filter_by(user_id=user_id, planet_id=planet_id).first()
 
     if not favorite:
@@ -219,7 +216,7 @@ def delete_favorite_people(people_id):
     if not user_id:
         return jsonify({"msg": "Se necesita el user_id"}), 400
 
-    # Buscamos el favorito específico que coincida con el usuario y la persona
+    
     favorite = Favorite.query.filter_by(user_id=user_id, people_id=people_id).first()
 
     if not favorite:
